@@ -4,7 +4,6 @@ from sklearn.metrics import mean_absolute_error
 import pandas as pd 
 
 train_data = pd.read_csv("data/train.csv")
-test_data = pd.read_csv("data/test.csv")
 
 features = ["LotArea", "YearBuilt", "1stFlrSF", "2ndFlrSF", "FullBath", "BedroomAbvGr"]
 
@@ -27,16 +26,25 @@ for max_leaf_nodes in range(5, 1000, 1):
     mae = get_mae(max_leaf_nodes, train_X, val_X, train_y, val_y)
     scores[max_leaf_nodes] = mae
 
-optimum_tree_size = min(scores, key=scores.get)
+optimum_leaf_nodes = min(scores, key=scores.get)
 
-print(optimum_tree_size)
+print(optimum_leaf_nodes)
 
-model = DecisionTreeRegressor(max_leaf_nodes=optimum_tree_size, random_state=0)
+model = DecisionTreeRegressor(max_leaf_nodes=optimum_leaf_nodes, random_state=0)
 
 model.fit(X,y)
 
-predictions = model.predict(val_X)
+val_predictions = model.predict(val_X)
 
-print(predictions[:5])
+print("mae:", mean_absolute_error(val_y, val_predictions))
 
-print(mean_absolute_error(val_y, predictions))
+#Predicting on test data
+
+test_data = pd.read_csv("data/test.csv")
+
+test_X = test_data[features]
+
+test_predictions = model.predict(test_X)
+
+output = pd.DataFrame({"Id": test_data.Id, "SalePrice": test_predictions})
+output.to_csv("predictions.csv", index=False)
